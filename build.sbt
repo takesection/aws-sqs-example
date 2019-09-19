@@ -12,3 +12,9 @@ lazy val receiverApp = (project in file("receiver-app"))
     libraryDependencies ++= ReceiverAppDeps
   )
 
+lazy val sandboxApp = (project in file("sandbox"))
+  .settings(
+    name := "sandbox-app",
+    mainClass := Some("jp.pigumer.example.Sandbox"),
+    libraryDependencies ++= ReceiverAppDeps
+  )

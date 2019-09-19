@@ -6,4 +6,7 @@ object Dependencies {
   lazy val ReceiverAppDeps = Seq(
     AkkaStreamAlpakkaSqs
   )
+  lazy val SandboxAppDeps = Seq(
+    AkkaStreamAlpakkaSqs
+  )
 }
