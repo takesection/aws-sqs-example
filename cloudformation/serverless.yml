@@ -1,0 +1,14 @@
+service: aws-sqs-example
+provider: aws
+
+resources:
+  Resources:
+    HighPriorityQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: 'HighPriority'
+    NormalPriorityQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: 'NormalPriority'
+
