@@ -8,6 +8,7 @@ ThisBuild / organizationName := "example"
 lazy val receiverApp = (project in file("receiver-app"))
   .settings(
     name := "receiver-app",
+    mainClass := Some("jp.pigumer.example.Main"),
     libraryDependencies ++= ReceiverAppDeps
   )
 
