@@ -1,5 +1,27 @@
 service: aws-sqs-example
-provider: aws
+provider:
+  name: aws
+  role: LambdaRole
+package:
+  artifact: "../sender-app/target/scala-2.12/sender-app-assembly-0.1.0-SNAPSHOT.jar"
+
+functions:
+  highPriority:
+    handler: "jp.pigumer.example.Handler::handleRequest"
+    runtime: java8
+    environment:
+      QUEUE:
+        "Fn::GetAtt":
+          - HighPriorityQueue
+          - QueueName
+  normalPriority:
+    handler: "jp.pigumer.example.Handler::handleRequest"
+    runtime: java8
+    environment:
+      QUEUE:
+        "Fn::GetAtt":
+          - NormalPriorityQueue
+          - QueueName
 
 resources:
   Resources:
@@ -11,4 +33,34 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: 'NormalPriority'
-
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: true
+    LambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: aws-sqs-example-lambda-role
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+          - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+        Policies:
+          - PolicyName: AWSLambdaSQSWrite
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "sqs:*"
+                  Resource:
+                    - "*"
