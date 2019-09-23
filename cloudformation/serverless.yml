@@ -53,20 +53,13 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: 'NormalPriority'
-    UserPool:
-      Type: AWS::Cognito::UserPool
-      Properties:
-        AdminCreateUserConfig:
-          AllowAdminCreateUserOnly: true
     ApiGatewayAuthorizer:
       Type: AWS::ApiGateway::Authorizer
       Properties:
         IdentitySource: method.request.header.Authorization
         Name: Cognite
         ProviderARNs:
-          - Fn::GetAtt:
-              - UserPool
-              - Arn
+          - ${opt:userpool}
         RestApiId:
           Ref: ApiGatewayRestApi
         Type: COGNITO_USER_POOLS
