@@ -6,8 +6,8 @@ import org.apache.logging.log4j.core.config.plugins.processor._
 import scala.collection.JavaConverters.asJavaEnumerationConverter
 
 object Log4j2MergeStrategy {
-  val plugincache = new MergeStrategy {
 
+  val plugincache = new MergeStrategy {
 
     val name = "log4j2::plugincache"
 

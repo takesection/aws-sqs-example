@@ -1,13 +1,24 @@
 service: aws-sqs-example
+
 provider:
   name: aws
   role: LambdaRole
+
 package:
   artifact: "../sender-app/target/scala-2.12/sender-app-assembly-0.1.0-SNAPSHOT.jar"
 
 functions:
   highPriority:
     handler: "jp.pigumer.example.Handler::handleRequest"
+    events:
+      - http:
+          path: high-priority
+          method: post
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
     runtime: java8
     environment:
       QUEUE:
@@ -16,6 +27,15 @@ functions:
           - QueueName
   normalPriority:
     handler: "jp.pigumer.example.Handler::handleRequest"
+    events:
+      - http:
+          path: normal-priority
+          method: post
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
     runtime: java8
     environment:
       QUEUE:
@@ -38,6 +58,18 @@ resources:
       Properties:
         AdminCreateUserConfig:
           AllowAdminCreateUserOnly: true
+    ApiGatewayAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        IdentitySource: method.request.header.Authorization
+        Name: Cognite
+        ProviderARNs:
+          - Fn::GetAtt:
+              - UserPool
+              - Arn
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
     LambdaRole:
       Type: AWS::IAM::Role
       Properties:

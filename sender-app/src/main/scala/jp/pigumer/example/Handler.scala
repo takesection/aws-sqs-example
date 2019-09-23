@@ -4,7 +4,7 @@ import java.io.{IOException, InputStream, OutputStream}
 import java.nio.charset.StandardCharsets
 
 import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient, AmazonSQSClientBuilder}
+import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClientBuilder}
 import org.apache.logging.log4j.LogManager
 import spray.json._
 
@@ -21,7 +21,14 @@ class Handler extends SQS {
     val request = JsonParser(
       new String(Stream.continually(input.read).takeWhile(_ != -1).map(_.toByte).toArray, StandardCharsets.UTF_8)
     )
-    val res = publish(request.asJsObject)
-    Logger.info(s"${request.compactPrint} -> $res")
+    val response = publish(request.asJsObject)
+    Logger.info(s"${request.compactPrint} -> $response")
+
+    output.write(
+      JsObject(
+        "statusCode" -> JsNumber(200),
+        "body" -> JsString(JsObject().compactPrint)
+      ).compactPrint.getBytes(StandardCharsets.UTF_8)
+    )
   }
 }

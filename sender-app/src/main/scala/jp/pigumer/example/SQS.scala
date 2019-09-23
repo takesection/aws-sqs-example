@@ -4,7 +4,7 @@ import java.time.format.DateTimeFormatter
 import java.time.{ZoneId, ZonedDateTime}
 
 import com.amazonaws.services.sqs.{AmazonSQS, AmazonSQSClient}
-import com.amazonaws.services.sqs.model.{GetQueueUrlRequest, SendMessageRequest}
+import com.amazonaws.services.sqs.model.{GetQueueUrlRequest, SendMessageRequest, SendMessageResult}
 import spray.json._
 
 trait SQS {
@@ -14,7 +14,7 @@ trait SQS {
   val currentTimestamp = {
     format.format(ZonedDateTime.now(ZoneId.of("UTC")))
   }
-  def publish(json: JsObject)(implicit client: AmazonSQS) = {
+  def publish(json: JsObject)(implicit client: AmazonSQS): SendMessageResult = {
     val getQueueUrlRequest = new GetQueueUrlRequest().withQueueName(QueueName)
     val res = client.getQueueUrl(getQueueUrlRequest)
     val sendMessageRequest = new SendMessageRequest()
