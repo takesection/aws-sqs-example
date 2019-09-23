@@ -46,7 +46,7 @@ function App() {
           <HighPrioritySender/>
         </header>
     </div>
-);
+  );
 }
 
 export default App;

@@ -11,7 +11,7 @@ class HighPrioritySender extends Component {
         return (
           <div className="HighPrioritySender">
               <form onSubmit={this.handleSubmit}>
-                <label>Normal Priority</label>
+                <label>High Priority</label>
                 <p/>
                 <textarea value={this.text}>
                 </textarea>
