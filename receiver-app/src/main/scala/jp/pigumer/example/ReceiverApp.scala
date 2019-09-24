@@ -1,43 +1,62 @@
 package jp.pigumer.example
 
+import java.util.concurrent.Executors
+
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.event.Logging
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.alpakka.sqs.SqsSourceSettings
+import akka.stream.scaladsl.{RunnableGraph, Sink, Source}
 import akka.stream.{ActorMaterializer, Attributes, Materializer}
 import com.github.matsluni.akkahttpspi.AkkaHttpClient
 import jp.pigumer.sqs.AwsSqs
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 
-trait ReceiverApp extends AwsSqs {
+import scala.concurrent.ExecutionContext
+
+trait ReceiverApp extends AwsSqs with ExampleFlow {
 
   implicit val system: ActorSystem = ActorSystem("App")
   implicit val mat: Materializer = ActorMaterializer()
 
+  val executionContext = ExecutionContext.fromExecutor(
+    Executors.newFixedThreadPool(100)
+  )
   implicit val awsSqsClient: SqsAsyncClient = SqsAsyncClient
     .builder()
     .region(Region.AP_NORTHEAST_1)
-    .httpClient(AkkaHttpClient.builder().withActorSystem(system).build())
+    .httpClient(AkkaHttpClient.builder().withActorSystem(system).withExecutionContext(executionContext).build())
     .build()
 
   system.registerOnTermination(awsSqsClient.close())
 
-  val queueName = (i: Int) => {
-    val queueNames = Map(
-      1 -> "HighPriority",
-      2 -> "NormalPriority"
-    )
-    queueNames(i)
+  val queueNames: Seq[String] = Seq(
+    "HighPriority",
+    "HighPriority",
+    "HighPriority",
+    "HighPriority",
+    "HighPriority",
+    "HighPriority",
+    "HighPriority",
+    "NormalPriority",
+    "NormalPriority",
+    "NormalPriority"
+  )
+
+  val runnable: RunnableGraph[NotUsed] = {
+    Source(1 to queueNames.length)
+      .groupBy(queueNames.length, _ % queueNames.length).async
+      .via(
+        SqsSourceFlow(
+          SqsSourceSettings.Defaults.withMaxBatchSize(1).withMaxBufferSize(1)
+        ).via(DeleteFlow)
+      )
+      .async
+      .log("deleted")
+      .withAttributes(Attributes.logLevels(onElement = Logging.InfoLevel))
+      .to(Sink.ignore)
   }
 
-  val runnable = {
-    Source(1 to 2)
-      .groupBy(2, _ % 2)
-      .map(queueName)
-      .via(SqsSourceFlow())
-      .mergeSubstreams.log("merge").withAttributes(Attributes.logLevels(onElement = Logging.InfoLevel))
-      .via(DeleteFlow)
-  }
-
-  runnable.runWith(Sink.ignore)
+  runnable.run()
 }
